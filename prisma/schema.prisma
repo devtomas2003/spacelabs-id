@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Apps {
+  id String @unique @id
+  appName String
+  AllowedRedirectDomains AllowedRedirectDomains[]
+  Scopes Scopes[]
+}
+
+model AllowedRedirectDomains {
+  id String @unique @id
+  appId String
+  uri String
+  Apps Apps @relation(fields: [appId], references: [id])
+}
+
+model Scopes {
+  id String @unique @id
+  description String
+  Apps Apps[]
+}

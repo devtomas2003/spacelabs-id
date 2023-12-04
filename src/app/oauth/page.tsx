@@ -1,19 +1,28 @@
+import { MdErrorOutline } from "react-icons/md";
+
 interface IPropsLoginPage {
     searchParams: {
         dark?: string;
+        scopes?: string;
+        clientId?: string;
+        redirectUri?: string;
+        state?: string;
     };
 };
 
-export default function Auth(props: IPropsLoginPage){
+const checkOAuthParams = (props: IPropsLoginPage) => { return (props.searchParams.clientId && props.searchParams.redirectUri && props.searchParams.scopes); }
 
+export default async function Auth(props: IPropsLoginPage){
     const isDark = props.searchParams.dark === "on" ? true : false;
-
+    const staticData = await fetch("http://127.0.0.1/api/oauth-data?clientId=" + props.searchParams.clientId + "&redirectUri=" + props.searchParams.redirectUri + "&scopes" + props.searchParams.scopes, { cache: 'no-store' });
+    
     return (
         <div className={`flex flex-col w-full h-full absolute justify-center items-center ${isDark ? "bg-zinc-950" : "bg-gray-50"}`}>
             <div className="flex flex-col items-center space-y-2">
                 <img src={ isDark ? "/logo-white.svg" : "/logo.svg" } title="SpaceLabs Logo" alt="SpaceLabs Logo" className="w-72" />
-                <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-zinc-800" }`}>Inicie sessão com o seu ID</h1>
+                { checkOAuthParams(props) ? <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-zinc-800" }`}>Inicie sessão com o seu ID</h1> : null }
             </div>
+            { checkOAuthParams(props) ?
             <form className={`p-6 border shadow-md w-[30rem] mt-4 rounded-lg flex flex-col space-y-2 ${isDark ? "bg-zinc-800 border-zinc-900" : "bg-white" }`}>
                 <p className={`${isDark ? "text-white" : "text-zinc-800" }`}>Está a aceder ao serviço: <label className="font-bold">SpaceLabs Play</label></p>
                 <div>
@@ -34,7 +43,13 @@ export default function Auth(props: IPropsLoginPage){
                         </div>
                     </div>
                 </div>
-            </form>
+            </form> :
+            <div className={`p-6 border shadow-md w-[30rem] items-center mt-4 rounded-lg flex flex-col ${isDark ? "bg-zinc-800 border-zinc-900" : "bg-white" }`}>
+                <MdErrorOutline className="w-28 h-28 text-red-500" />
+                <p className="mt-4 text-lg text-zinc-800">Faltam dados necessarios para a autenticação!</p>
+                <button className="mt-4 p-2 w-full rounded text-white bg-emerald-500 hover:bg-emerald-600">Ir para a SpaceLabs</button>
+            </div>
+            }
         </div>
     );
 }
