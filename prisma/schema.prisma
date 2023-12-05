@@ -26,3 +26,28 @@ model Scopes {
   description String
   Apps Apps[]
 }
+
+model Users {
+  userId String @unique @id
+  name String
+  email String @unique
+  nif String @unique
+  contato String
+  password String
+  otpCode String?
+  TrustedDevices TrustedDevices[]
+  RecoverCodes RecoverCodes[]
+}
+
+model TrustedDevices {
+  id String @unique @id
+  fingerprint String @unique
+  Users Users[]
+}
+
+model RecoverCodes {
+  id String @unique @id
+  code String @unique
+  userId String
+  Users Users @relation(fields: [userId], references: [userId])
+}

@@ -19,17 +19,14 @@ const checkOAuthParams = (props: IPropsLoginPage) => { return (props.searchParam
 
 export default async function Auth(props: IPropsLoginPage){
     const isDark = props.searchParams.dark === "on" ? true : false;
-    let authData: IOAuthApp;
 
-    if(checkOAuthParams(props)){
-        const staticData = await fetch("http://127.0.0.1:3000/api/oauth-data?clientId=" + props.searchParams.clientId + "&redirectUri=" + props.searchParams.redirectUri + "&scopes=" + props.searchParams.scopes, { cache: 'no-store' });
-        authData = await staticData.json();
-    }else{
-        authData = {
-            message: "Faltam dados necessarios para a autenticação!",
+    const authData: IOAuthApp = checkOAuthParams(props)? await (await fetch(`http://127.0.0.1:3000/api/oauth-data?clientId=${props.searchParams.clientId}&redirectUri=${props.searchParams.redirectUri}&scopes=${props.searchParams.scopes}`, {
+        cache: 'no-store'
+    })).json()
+        : {
+            message: "Faltam dados necessários para a autenticação!",
             appName: "Unknown"
-        }
-    }
+        };
     
     return (
         <div className={`flex flex-col w-full h-full absolute justify-center items-center ${isDark ? "bg-zinc-950" : "bg-gray-50"}`}>
@@ -61,8 +58,8 @@ export default async function Auth(props: IPropsLoginPage){
             </form> :
             <div className={`p-6 border shadow-md w-[30rem] items-center mt-4 rounded-lg flex flex-col ${isDark ? "bg-zinc-800 border-zinc-900" : "bg-white" }`}>
                 <MdErrorOutline className="w-28 h-28 text-red-500" />
-                <p className="mt-4 text-lg text-zinc-800">{authData.message}</p>
-                <button className="mt-4 p-2 w-full rounded text-white bg-emerald-500 hover:bg-emerald-600">Ir para a SpaceLabs</button>
+                <p className={`mt-4 text-lg ${isDark ? "text-white" : "text-zinc-800" }`}>{authData.message}</p>
+                <button className="mt-4 p-2 w-full rounded text-white bg-emerald-500 hover:bg-emerald-600" type="button">Ir para a SpaceLabs</button>
             </div>
             }
         </div>

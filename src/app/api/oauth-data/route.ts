@@ -35,6 +35,11 @@ export async function GET(req: NextRequest){
         select: {
           uri: true
         }
+      },
+      Scopes: {
+        select: {
+          id: true
+        }
       }
     }
   });
@@ -49,13 +54,25 @@ export async function GET(req: NextRequest){
   }
 
   const { hostname } = new URL(redirectUri);
-  const domainsAllowed = apps.AllowedRedirectDomains.map((domain) => { return (domain.uri); });
+  const allowedDomains = apps.AllowedRedirectDomains.map((domain) => { return (domain.uri); });
 
-  if(!domainsAllowed.includes(hostname)){
+  if(!allowedDomains.includes(hostname)){
     return new Response(JSON.stringify({
       message: "Dominio OAuth não permitido!"
     }), {
       status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const allowedScopes = apps.Scopes.map((scope) => { return (scope.id); });
+  const listOfRequestedScopes = scopes.split(",");
+
+  if(!checkScopes(listOfRequestedScopes, allowedScopes)){
+    return new Response(JSON.stringify({
+      message: "Scopes pedidos não permitidos!"
+    }), {
+      status: 401,
       headers: { "Content-Type": "application/json" },
     });
   }
@@ -73,4 +90,8 @@ function isValidHttpsUrl(url: string) {
   } catch (err) {
     return false;
   }
+}
+
+function checkScopes(requestedScopes: string[], allowedScopes: string[]): boolean {
+  return requestedScopes.every(reqScope => allowedScopes.includes(reqScope));
 }
