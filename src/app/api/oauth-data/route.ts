@@ -12,6 +12,15 @@ export async function GET(req: NextRequest){
       message: "Faltam dados necessarios para a autenticação!"
     }), {
       status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  if(!isValidHttpsUrl(redirectUri)){
+    return new Response(JSON.stringify({
+      message: "Dominio OAuth invalido!"
+    }), {
+      status: 404,
       headers: { "Content-Type": "application/json" },
     });
   }
@@ -21,7 +30,12 @@ export async function GET(req: NextRequest){
       id: clientId
     },
     select: {
-      appName: true
+      appName: true,
+      AllowedRedirectDomains: {
+        select: {
+          uri: true
+        }
+      }
     }
   });
 
@@ -34,8 +48,29 @@ export async function GET(req: NextRequest){
     });
   }
 
+  const { hostname } = new URL(redirectUri);
+  const domainsAllowed = apps.AllowedRedirectDomains.map((domain) => { return (domain.uri); });
+
+  if(!domainsAllowed.includes(hostname)){
+    return new Response(JSON.stringify({
+      message: "Dominio OAuth não permitido!"
+    }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   return new Response(JSON.stringify(apps), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function isValidHttpsUrl(url: string) {
+  try {
+    const newUrl = new URL(url);
+    return newUrl.protocol === 'https:';
+  } catch (err) {
+    return false;
+  }
 }

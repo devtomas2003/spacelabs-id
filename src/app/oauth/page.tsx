@@ -10,11 +10,26 @@ interface IPropsLoginPage {
     };
 };
 
+interface IOAuthApp {
+    message: string;
+    appName: string;
+}
+
 const checkOAuthParams = (props: IPropsLoginPage) => { return (props.searchParams.clientId && props.searchParams.redirectUri && props.searchParams.scopes); }
 
 export default async function Auth(props: IPropsLoginPage){
     const isDark = props.searchParams.dark === "on" ? true : false;
-    const staticData = await fetch("http://127.0.0.1/api/oauth-data?clientId=" + props.searchParams.clientId + "&redirectUri=" + props.searchParams.redirectUri + "&scopes" + props.searchParams.scopes, { cache: 'no-store' });
+    let authData: IOAuthApp;
+
+    if(checkOAuthParams(props)){
+        const staticData = await fetch("http://127.0.0.1:3000/api/oauth-data?clientId=" + props.searchParams.clientId + "&redirectUri=" + props.searchParams.redirectUri + "&scopes=" + props.searchParams.scopes, { cache: 'no-store' });
+        authData = await staticData.json();
+    }else{
+        authData = {
+            message: "Faltam dados necessarios para a autenticação!",
+            appName: "Unknown"
+        }
+    }
     
     return (
         <div className={`flex flex-col w-full h-full absolute justify-center items-center ${isDark ? "bg-zinc-950" : "bg-gray-50"}`}>
@@ -22,9 +37,9 @@ export default async function Auth(props: IPropsLoginPage){
                 <img src={ isDark ? "/logo-white.svg" : "/logo.svg" } title="SpaceLabs Logo" alt="SpaceLabs Logo" className="w-72" />
                 { checkOAuthParams(props) ? <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-zinc-800" }`}>Inicie sessão com o seu ID</h1> : null }
             </div>
-            { checkOAuthParams(props) ?
+            { !authData.message ?
             <form className={`p-6 border shadow-md w-[30rem] mt-4 rounded-lg flex flex-col space-y-2 ${isDark ? "bg-zinc-800 border-zinc-900" : "bg-white" }`}>
-                <p className={`${isDark ? "text-white" : "text-zinc-800" }`}>Está a aceder ao serviço: <label className="font-bold">SpaceLabs Play</label></p>
+                <p className={`${isDark ? "text-white" : "text-zinc-800" }`}>Está a aceder ao serviço: <label className="font-bold">{authData.appName}</label></p>
                 <div>
                     <p className={`mb-2 ${isDark ? "text-white" : "text-zinc-800" }`}>O seu e-mail</p>
                     <input type="text" placeholder="john@example.com" className={`outline-none text-sm rounded-lg focus:ring-primary-600 border focus:border-primary-600 w-full p-2.5 ${isDark ? "bg-zinc-950 border-zinc-900 text-white" : "bg-gray-50 border-gray-300 text-gray-900" }`} />
@@ -46,7 +61,7 @@ export default async function Auth(props: IPropsLoginPage){
             </form> :
             <div className={`p-6 border shadow-md w-[30rem] items-center mt-4 rounded-lg flex flex-col ${isDark ? "bg-zinc-800 border-zinc-900" : "bg-white" }`}>
                 <MdErrorOutline className="w-28 h-28 text-red-500" />
-                <p className="mt-4 text-lg text-zinc-800">Faltam dados necessarios para a autenticação!</p>
+                <p className="mt-4 text-lg text-zinc-800">{authData.message}</p>
                 <button className="mt-4 p-2 w-full rounded text-white bg-emerald-500 hover:bg-emerald-600">Ir para a SpaceLabs</button>
             </div>
             }
