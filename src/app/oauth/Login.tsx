@@ -3,7 +3,8 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IResponseLoginForm } from "../Types/LoginForm";
+import type { IResponseLoginForm } from "../../Types/LoginForm";
+import { useSearchParams } from "next/navigation";
 
 const submitLoginFormSchema = z.object({
     email: z.string().email('O email é inválido!'),
@@ -13,6 +14,8 @@ const submitLoginFormSchema = z.object({
 type SubmitLoginFormData = z.infer<typeof submitLoginFormSchema>;
 
 export default function Login(){
+    const searchParams = useSearchParams();
+    
     const { register, handleSubmit, formState: { errors }, reset, setError } = useForm<SubmitLoginFormData>({
         resolver: zodResolver(submitLoginFormSchema),
         mode: 'onChange',
@@ -30,6 +33,12 @@ export default function Login(){
             setError('password', {
                 message: authData.message
             });
+        }
+        if(authData.keyOAuth){
+            const redirectUriQP = searchParams.get("redirectUri");
+            const redirectUri = redirectUriQP ? redirectUriQP : "";
+            const goodUri = redirectUri.endsWith("/") ? redirectUri : redirectUri + "/";
+            location.href = goodUri + "?key=" + authData.keyOAuth;
         }
     }
 

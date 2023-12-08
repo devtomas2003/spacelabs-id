@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
+import type { IOAuthLocal } from "@/Types/OAuth";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest){
@@ -16,68 +16,47 @@ export async function GET(req: NextRequest){
         }), {
             status: 400,
             headers: {
-                "Content-Type": "application/json",
-                "WWW-Authenticate": 'Basic realm="User - SpaceLabs Services"'
+                "Content-Type": "application/json"
             },
         });
     }
 
-    const encoded = authHeader.substring(6);
-    const decoded = Buffer.from(encoded, 'base64').toString('ascii');
-    const [username, password] = decoded.split(":");
-    
-    if(username === "" || password === ""){
+    const authSplt = authHeader.split(" ");
+    const jwtToken = authSplt[1];
+
+    const jwtData = await validateJWT(jwtToken);
+
+    if(!jwtData){
         return new Response(JSON.stringify({
-            message: "Email e/ou password incorreto(s)!"
+            message: "Authorization inválido!"
         }), {
             status: 400,
             headers: {
-                "Content-Type": "application/json",
-                "WWW-Authenticate": 'Basic realm="User - SpaceLabs Services"'
+                "Content-Type": "application/json"
             },
         });
     }
 
     const user = await prisma.users.findUnique({
         where: {
-            email: username
-        },
-        select: {
-            password: true,
-            otpCode: true,
-            userId: true
+            userId: jwtData
         }
     });
 
     if(!user){
         return new Response(JSON.stringify({
-            message: "Email e/ou password incorreto(s)!"
+            message: "Utilizador não encontrado!"
         }), {
             status: 404,
             headers: {
-                "Content-Type": "application/json",
-                "WWW-Authenticate": 'Basic realm="User - SpaceLabs Services"'
-            },
-        });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if(!validPassword){
-        return new Response(JSON.stringify({
-            message: "Email e/ou password incorreto(s)!"
-        }), {
-            status: 404,
-            headers: {
-                "Content-Type": "application/json",
-                "WWW-Authenticate": 'Basic realm="User - SpaceLabs Services"'
+                "Content-Type": "application/json"
             },
         });
     }
 
     const signKey = await readFileData('src/keys/private.key');
 
-    const localAuthKey = jwt.sign({ userId: user.userId }, signKey, {
+    const localAuthKey = jwt.sign({ userId: jwtData }, signKey, {
         expiresIn: '3h',
         algorithm: 'RS512'
     });
@@ -118,3 +97,18 @@ function readFileData(filePath: string): Promise<string> {
         });
     });
 }
+
+function validateJWT(key: string): Promise<string>{
+    return new Promise(async (resolve, reject) => {
+        const fileData = await readFileData("src/keys/public.key");
+        if(!fileData){
+            return reject("Sign File Read Error");
+        }
+        try {
+            const localAuth = jwt.verify(key, fileData) as IOAuthLocal;
+            resolve(localAuth.userId);
+        }catch(err){
+            reject("Tempo de sessão expirado!")
+        }
+    });
+  }

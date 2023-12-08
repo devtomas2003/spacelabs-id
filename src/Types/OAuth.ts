@@ -4,19 +4,20 @@ export interface IPropsLoginPage {
         clientId: string;
         redirectUri: string;
         state?: string;
+        ra?: string;
     };
 };
 
 export interface IOAuthApp {
     message?: string;
     appName?: string;
-    userInfo?: UserData;
+    userInfo?: IUserData;
 };
 
-export interface OAuthLocal {
+export interface IOAuthLocal {
     userId: string;
 }
 
-interface UserData {
+export interface IUserData {
     name: string;
 }

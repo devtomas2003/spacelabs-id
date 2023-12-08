@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import type { NextRequest } from 'next/server';
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import type { OAuthLocal } from '../../Types/OAuth';
+import type { IOAuthLocal } from '../../../Types/OAuth';
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest){
@@ -131,7 +131,7 @@ function validateJWT(key: string): Promise<string>{
         return reject('Sign File Read Error');
       }
       try {
-        const localAuth = jwt.verify(key, data) as OAuthLocal;
+        const localAuth = jwt.verify(key, data) as IOAuthLocal;
         resolve(localAuth.userId);
       }catch(err){
         reject("Tempo de sessão expirado!")

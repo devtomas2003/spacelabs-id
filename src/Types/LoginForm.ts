@@ -1,4 +1,4 @@
 export interface IResponseLoginForm {
     message: string;
-    idAuth: string;
+    keyOAuth: string;
 }

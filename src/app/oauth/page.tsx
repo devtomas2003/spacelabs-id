@@ -1,8 +1,9 @@
 import { MdErrorOutline } from "react-icons/md";
 import Login from "./Login";
 import { cookies } from "next/headers";
-import type { IOAuthApp, IPropsLoginPage } from "../Types/OAuth";
-import { Fragment } from "react";
+import type { IOAuthApp, IPropsLoginPage } from "../../Types/OAuth";
+import ScreenAlreadyAuthBtns from "./ScreenAlreadyAuthBtns";
+import { simplifyName } from "@/Utils/Handlers";
 
 const checkOAuthParams = (props: IPropsLoginPage) => { return (props.searchParams.clientId && props.searchParams.redirectUri && props.searchParams.scopes); }
 
@@ -20,14 +21,6 @@ export default async function Auth(props: IPropsLoginPage){
         message: "Faltam dados necessários para a autenticação!",
         appName: "Unknown"
     };
-
-    function simplifyName(nameComplete: string){
-        const nameSplt = nameComplete.split(" ");
-        return {
-            firstLast: nameSplt[0] + " " + nameSplt[nameSplt.length-1],
-            firstName: nameSplt[0]
-        };
-    }
     
     return (
         <div className="flex flex-col w-full h-full absolute justify-center items-center bg-gray-50">
@@ -37,13 +30,12 @@ export default async function Auth(props: IPropsLoginPage){
             </div>
             { !authData.message ?
             <div className="p-6 border shadow-md w-[30rem] mt-4 bg-white rounded-lg">
-                <p className="text-zinc-800">Está a aceder ao serviço: <label className="font-bold">{authData.appName}</label></p>
+                <p className={`text-zinc-800 ${authData.userInfo ? "text-center" : null}`}>Está a aceder ao serviço: <label className="font-bold">{authData.appName}</label></p>
                 { authData.userInfo ?
                 <div className="mt-4 flex flex-col items-center">
                     <img src="/default.png" className="border rounded-full w-28 h-28" title={simplifyName(authData.userInfo.name).firstLast} alt={simplifyName(authData.userInfo.name).firstLast} />
                     <p className="text-zinc-800 mt-2">Bem-vindo(a) de volta, <strong>{simplifyName(authData.userInfo.name).firstLast}</strong></p>
-                    <button className="w-full text-white outline-none rounded-lg px-5 py-2.5 mt-2 bg-red-500 hover:bg-red-600" type="submit">Continuar como {simplifyName(authData.userInfo.name).firstName}</button>
-                    <button className="w-full text-zinc-800 outline-none rounded-lg px-5 py-2.5 mt-2 border border-red-500 hover:border-zinc-800 hover:bg-zinc-800 hover:text-white" type="submit">Iniciar Sessão com outra conta</button>
+                    <ScreenAlreadyAuthBtns name={authData.userInfo.name} />
                 </div> : <Login /> }
             </div>
             :
