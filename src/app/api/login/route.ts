@@ -1,8 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { v4 as uuidv4 } from "uuid";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest){
@@ -76,13 +78,29 @@ export async function GET(req: NextRequest){
 
     const signKey = fs.readFileSync('src/keys/private.key');
 
-    const userAuth = jwt.sign({ userId: user.userId }, signKey, {
+    const localAuthKey = jwt.sign({ userId: user.userId }, signKey, {
         expiresIn: '3h',
         algorithm: 'RS512'
     });
 
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+
+    await prisma.oAuthKeys.create({
+        data: {
+            expires: now,
+            userId: user.userId,
+            id: uuidv4()
+        }
+    });
+
+    cookies().set("@spacelabs/id", localAuthKey, {
+        maxAge: 60*60*3,
+        httpOnly: true
+    })
+
     return new Response(JSON.stringify({
-        userAuth
+        "status": "ok"
     }), {
         status: 200,
         headers: { "Content-Type": "application/json" },

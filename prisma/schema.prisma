@@ -11,7 +11,9 @@ model Apps {
   id String @unique @id
   appName String
   AllowedRedirectDomains AllowedRedirectDomains[]
+  scopesExpire Int
   Scopes Scopes[]
+  AuthHistory AuthHistory[]
 }
 
 model AllowedRedirectDomains {
@@ -37,6 +39,8 @@ model Users {
   otpCode String?
   TrustedDevices TrustedDevices[]
   RecoverCodes RecoverCodes[]
+  OAuthKeys OAuthKeys[]
+  AuthHistory AuthHistory[]
 }
 
 model TrustedDevices {
@@ -50,4 +54,20 @@ model RecoverCodes {
   code String @unique
   userId String
   Users Users @relation(fields: [userId], references: [userId])
+}
+
+model OAuthKeys {
+  id String @unique @id
+  userId String
+  Users Users @relation(fields: [userId], references: [userId])
+  expires DateTime
+}
+
+model AuthHistory {
+  id String @unique @id
+  userId String
+  expiresAt DateTime
+  appId String
+  Users Users @relation(fields: [userId], references: [userId])
+  Apps Apps @relation(fields: [appId], references: [id])
 }

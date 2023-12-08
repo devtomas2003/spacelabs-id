@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import type { NextRequest } from 'next/server';
+import jwt from "jsonwebtoken";
+import fs from "fs";
+import type { OAuthLocal } from '../../Types/OAuth';
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest){
@@ -77,10 +80,35 @@ export async function GET(req: NextRequest){
     });
   }
 
-  return new Response(JSON.stringify(apps), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  const preAuth = req.headers.get("Authorization") || "";
+  const preAuthList = preAuth.split(" ");
+
+  try{
+    const userId = await validateJWT(preAuthList[1]);
+    const userInfo = await prisma.users.findUnique({
+      where: {
+        userId: userId
+      },
+      select: {
+        name: true
+      }
+    });
+  
+    return new Response(JSON.stringify({
+      appName: apps.appName,
+      userInfo
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }catch(err){
+    return new Response(JSON.stringify({
+      appName: apps.appName
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 function isValidHttpsUrl(url: string) {
@@ -94,4 +122,20 @@ function isValidHttpsUrl(url: string) {
 
 function checkScopes(requestedScopes: string[], allowedScopes: string[]): boolean {
   return requestedScopes.every(reqScope => allowedScopes.includes(reqScope));
+}
+
+function validateJWT(key: string): Promise<string>{
+  return new Promise((resolve, reject) => {
+    fs.readFile('src/keys/public.key', (err, data) => {
+      if(err){
+        return reject('Sign File Read Error');
+      }
+      try {
+        const localAuth = jwt.verify(key, data) as OAuthLocal;
+        resolve(localAuth.userId);
+      }catch(err){
+        reject("Tempo de sessão expirado!")
+      }
+    });
+  });
 }
