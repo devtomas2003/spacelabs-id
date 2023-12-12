@@ -43,8 +43,8 @@ export default function ScreenAlreadyAuthBtns(props: IUserData){
 
     return (
         <Fragment>
-            <button className="w-full text-white outline-none rounded-lg px-5 py-2.5 mt-2 bg-red-500 hover:bg-red-600" type="button" onClick={() => { reauthSession(); }}>Continuar como {simplifyName(props.name).firstName}</button>
-            <button className="w-full text-zinc-800 outline-none rounded-lg px-5 py-2.5 mt-2 border border-red-500 hover:border-zinc-800 hover:bg-zinc-800 hover:text-white" type="button" onClick={() => { deleteSession(); }}>Iniciar Sessão com outra conta</button>
+            <button className="w-full text-white outline-none rounded-lg px-5 py-2.5 mt-4 bg-red-500 hover:bg-red-600" type="button" onClick={() => { reauthSession(); }}>Continuar como {simplifyName(props.name).firstName}</button>
+            <button className="w-full text-zinc-800 outline-none rounded-lg px-5 py-2.5 mt-2 border border-red-500 hover:bg-gray-100" type="button" onClick={() => { deleteSession(); }}>Iniciar Sessão com outra conta</button>
         </Fragment>
     );
 }
